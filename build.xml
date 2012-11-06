@@ -1,4 +1,4 @@
-<project name="Diane" default="jars">
+<project name="roboguice-mapscompatibility" default="jars">
 	<!-- change this as your own	-->
 	
 	<property name="name" value="${ant.project.name}"/>
@@ -8,107 +8,91 @@
 	<property name="copyright" value="Copyleft 2012 Massimiliano Leone - iubris.net@gmail.com"/>
 	<property name="license.file" value="COPYING.txt"/>
 	<property name="license.url" value="http://www.gnu.org/licenses/lgpl.txt"/>
-	<property name="docurl" value="https://github.com/k0smik0/diane"/>
+	<property name="docurl" value="https://github.com/k0smik0/roboguice-mapscompatibility"/>
 	
 	
 	<property name="android-path" value="/data/fucina/develop/usr/apps/android-sdk-linux_86/" />
-	<property name="android-sdk-target-version" value="15"/>
+	<property name="android-sdk-target-version" value="16"/>
+	<property name="google-apis-sdk-target-version" value="11"/>
 		
-	<property name="main-libs-dir" value="libs"/>
-	<property name="roboguice-libs-dir" value="libs" />
-	
-	
-		
+	<property name="libs-dir" value="lib"/>
+			
 	<!-- don't touch below -->
 	
 	<property name="src.dir" value="src" />
 	<property name="build.dir" value="build" />	
 	
-	<property name="jar-main.file" value="${build.dir}/jars/diane.jar" />
-	<property name="jar-task.file" value="${build.dir}/jars/diane-task.jar" />
-	<property name="jar-roboguiced.file" value="${build.dir}/jars/diane-task-roboguiced.jar" />
+	<property name="jar-core.file" value="${build.dir}/jars/roboguice.jar" />
+	<property name="jar-maps.file" value="${build.dir}/jars/roboguice-maps.jar" />
 	
-	<path id="classpath-android">
+	<path id="classpath-sdk-android">
 		<fileset dir="${android-path}/platforms/android-${android-sdk-target-version}/">
 			<include name="android*.jar"/>
 		</fileset>
 	</path>
+	
+	<path id="classpath-sdk-maps">
+		<path refid="classpath-sdk-android"/>
+		<fileset dir="${android-path}/add-ons/addon_google_apis_google_inc_${google-apis-sdk-target-version}/libs/">
+			<include name="maps*.jar"/>
+		</fileset>
+	</path>
 				
-	<path id="classpath-main">
-		<path refid="classpath-android"/>		
-		<fileset dir="${main-libs-dir}">
-			<include name="epicurus.jar"/>
+	<path id="classpath-core">
+		<path refid="classpath-sdk-android"/>		
+		<fileset dir="${libs-dir}">
+			<include name="**/*.jar"/>
 		</fileset>
 	</path>
 	
-	<path id="classpath-task">
-		<path refid="classpath-main"/>
-		<fileset dir="${main-libs-dir}">
-			<include name="enhancedsafeasynctask.jar"/>
+	<path id="classpath-maps">
+		<path refid="classpath-sdk-maps"/>
+		<fileset dir="${libs-dir}">
+			<include name="**/*.jar"/>
 		</fileset>
-		<path location="${build.dir}/classes/main"/>
+		<path location="${build.dir}/classes/core"/>
 	</path>
-					
-	<path id="classpath-roboguiced">
-		<path refid="classpath-task"/>
-		<fileset dir="${roboguice-libs-dir}">
-			<include name="javax.inject.jar"/>
-			<include name="sisu-guice-3.0.3-no_aop.jar"/>
-			<include name="roboguice-2.0.jar"/>
-		</fileset>
-		<path location="${build.dir}/classes/main"/>
-		<path location="${build.dir}/classes/task/base"/>
-	</path>	
 
-	<target name="clean-main">
-		<delete dir="${build.dir}/classes/main"/>
-		<delete file="${jar-main.file}"/>
+	<target name="clean-core">
+		<delete dir="${build.dir}/classes/core"/>
+		<delete file="${jar-core.file}"/>
 	</target>		
 	
-  <target name="clean-task">
-  	<delete dir="${build.dir}/classes/task/base"/>
-  	<delete file="${jar-task.file}"/>        
+  <target name="clean-maps">
+  	<delete dir="${build.dir}/classes/maps"/>
+  	<delete file="${jar-maps.file}"/>
   </target>
 	
-	<target name="clean-task-roboguiced">
-		<delete dir="${build.dir}/classes/task/roboguiced"/>
-		<delete file="${jar-roboguiced.file}"/>
-	</target>
+	<target name="clean" depends="clean-core, clean-maps"/>	
 	
-	<target name="clean" depends="clean-main, clean-task, clean-task-roboguiced"/>	
-	
-	
-	<target name="compile-main">
-		<mkdir dir="${build.dir}/classes/main"/>
-		<javac destdir="${build.dir}/classes/main" includeantruntime="false">
+	<target name="compile-core">
+		<mkdir dir="${build.dir}/classes/core"/>
+		<javac destdir="${build.dir}/classes/core" includeantruntime="false">
 			<src path="${src.dir}/main" />
 			<include name="**/*.java"/>
-			<classpath refid="classpath-main"/>
+			<exclude name="**/*RoboMapFragment.java"/>
+			<exclude name="**/*RoboMapActivity.java"/>
+			<exclude name="**/*RoboFragmentMapActivity.java"/>
+			<exclude name="**/test/**/*.java"/>
+			<classpath refid="classpath-core"/>
 		</javac>
 	</target>
 		
-	<target name="compile-task" depends="compile-main">
-		<mkdir dir="${build.dir}/classes/task/base"/>
-		<javac destdir="${build.dir}/classes/task/base" includeantruntime="false">
-			<src path="${src.dir}/task/base" />
-			<include name="**/*.java"/>
-			<classpath refid="classpath-task"/>
+	<target name="compile-maps" depends="compile-core">
+		<mkdir dir="${build.dir}/classes/maps"/>
+		<javac destdir="${build.dir}/classes/maps" includeantruntime="false">
+			<src path="${src.dir}/main" />
+			<include name="**/*RoboMapFragment.java"/>
+			<include name="**/*RoboMapActivity.java"/>
+			<include name="**/*RoboFragmentMapActivity.java"/>
+			<exclude name="**/test/**/*.java"/>
+			<classpath refid="classpath-maps"/>
 		</javac>
 	</target>
 	
-	<target name="compile-task-roboguiced" depends="compile-main, compile-task">		
-		<mkdir dir="${build.dir}/classes/task/roboguiced"/>
-		<javac destdir="${build.dir}/classes/task/roboguiced" includeantruntime="false">
-			<src path="${src.dir}/task/roboguiced" />
-			<include name="**/*.java"/>
-			<!--classpath refid="classpath-main"/-->
-			<classpath refid="classpath-roboguiced"/>			
-		</javac>
-	</target>
-	
-	<target name="jar-main" depends="clean-main, compile-main">
+	<target name="jar-core" depends="clean-core, compile-core">
 		<mkdir dir="${build.dir}/jars/"/>
-		<jar destfile="${jar-main.file}" basedir="${build.dir}/classes/main">
+		<jar destfile="${jar-core.file}" basedir="${build.dir}/classes/core">
 			<manifest>
 				<attribute name="Built-By" value="${user}" />    
         <attribute name="Bundle-Name" value="${name}" />
@@ -122,9 +106,9 @@
 		</jar>
 	</target>
 	
-	<target name="jar-task" depends="clean-task, compile-task">
+	<target name="jar-maps" depends="clean-maps, compile-maps">
 			<mkdir dir="${build.dir}/jars/"/>
-			<jar destfile="${jar-task.file}" basedir="${build.dir}/classes/task/base">
+			<jar destfile="${jar-maps.file}" basedir="${build.dir}/classes/maps">
 				<manifest>
 					<attribute name="Built-By" value="${user}" />    
 	        <attribute name="Bundle-Name" value="${name}" />
@@ -138,22 +122,7 @@
 			</jar>
 		</target>
 	
-	<target name="jar-task-roboguiced" depends="clean-task-roboguiced, compile-task-roboguiced">
-		<mkdir dir="${build.dir}/jars/"/>
-		<jar destfile="${jar-roboguiced.file}" basedir="${build.dir}/classes/task/roboguiced">
-			<manifest>
-				<attribute name="Built-By" value="${user}" />    
-        <attribute name="Bundle-Name" value="${name}" />
-      	<attribute name="Bundle-Copyright" value="${copyright}" />
-      	<attribute name="Bundle-Vendor" value="${vendor}" />
-        <attribute name="Bundle-Version" value="${version}" />
-        <attribute name="Bundle-License" value="${license.url} " />
-        <attribute name="Build-DocURL" value="${docurl}" />	      
-			</manifest>			
-			<metainf dir="." includes="${license.file}"/>
-		</jar>
-	</target>
 	
-	<target name="jars" depends="jar-main, jar-task, jar-task-roboguiced"/>	
+	<target name="jars" depends="jar-core, jar-maps"/>	
 
 </project>
